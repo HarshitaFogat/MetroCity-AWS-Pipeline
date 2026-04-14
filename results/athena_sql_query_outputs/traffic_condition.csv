@@ -1,0 +1,6 @@
+"Location","Total_Readings","Avg_Vehicles","Peak_Vehicles","Avg_Speed_kmh","Avg_Congestion_Index","Max_Congestion_Index"
+"Residential Zone","59","329.4","494","45.5","0.5695","0.8813"
+"Downtown","55","290.6","492","49.4","0.503","0.8538"
+"Industrial Area","51","283.8","494","50.2","0.4906","0.8582"
+"Highway","80","257.8","491","49.7","0.4614","0.8127"
+"Suburbs","55","238.4","477","50.8","0.4325","0.873"

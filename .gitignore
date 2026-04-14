@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Credentials — NEVER commit these
+*.pem
+*.key
+credentials.csv
+aws_credentials*
+.aws/
+secrets.json
+config.ini
+*.env
+
+# AWS outputs / temp
+*.parquet
+*.pkl
+glue-scoped-policy.json
+load_rds.py.bak
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Large data outputs (keep raw CSVs, ignore processed)
+processed/
+athena-results/

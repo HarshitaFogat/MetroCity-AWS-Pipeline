@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetroCity AWS Architecture Diagram</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0e1a;
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .canvas {
+    width: 1100px;
+    background: linear-gradient(135deg, #0d1220 0%, #111827 50%, #0d1220 100%);
+    border: 1px solid rgba(255,153,0,0.25);
+    border-radius: 20px;
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* grid background texture */
+  .canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,153,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,153,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    border-radius: 20px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 44px;
+    position: relative;
+  }
+  .header-left h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .header-left h1 span { color: #FF9900; }
+  .header-left p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #5a6a8a;
+    margin-top: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .badge {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 400px;
+  }
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .pill-orange  { background: rgba(255,153,0,0.15);  color: #FF9900;  border: 1px solid rgba(255,153,0,0.3); }
+  .pill-blue    { background: rgba(59,130,246,0.12); color: #60a5fa;  border: 1px solid rgba(59,130,246,0.25); }
+  .pill-green   { background: rgba(16,185,129,0.12); color: #34d399;  border: 1px solid rgba(16,185,129,0.25); }
+  .pill-purple  { background: rgba(139,92,246,0.12); color: #a78bfa;  border: 1px solid rgba(139,92,246,0.25); }
+  .pill-teal    { background: rgba(20,184,166,0.12); color: #2dd4bf;  border: 1px solid rgba(20,184,166,0.25); }
+
+  /* ── Pipeline ──────────────────────────────────────────────────────────── */
+  .pipeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .layer-row {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 0;
+    position: relative;
+  }
+  .layer-row.cols-1 { grid-template-columns: 1fr; }
+  .layer-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .layer-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .layer-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .layer-row.cols-2-1 { grid-template-columns: 2fr 1fr; }
+  .layer-row.cols-1-2 { grid-template-columns: 1fr 2fr; }
+
+  .connector-area {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    position: relative;
+  }
+  .arrow-line {
+    width: 2px;
+    height: 32px;
+    background: linear-gradient(to bottom, rgba(255,153,0,0.6), rgba(255,153,0,0.2));
+    position: relative;
+  }
+  .arrow-line::after {
+    content: '▼';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgba(255,153,0,0.7);
+  }
+  .connector-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #4a5a7a;
+    position: absolute;
+    left: calc(50% + 16px);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+  }
+  .arrow-split {
+    display: flex;
+    width: 100%;
+    height: 32px;
+    position: relative;
+  }
+
+  /* ── Nodes ─────────────────────────────────────────────────────────────── */
+  .node {
+    border-radius: 12px;
+    padding: 16px 20px;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: transform 0.2s ease;
+  }
+  .node:hover { transform: translateY(-2px); }
+
+  .node-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .node-body { flex: 1; min-width: 0; }
+  .node-service {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .node-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .node-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    line-height: 1.5;
+    opacity: 0.65;
+  }
+  .node-tag {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Node color variants */
+  .n-orange {
+    background: rgba(255,153,0,0.08);
+    border: 1px solid rgba(255,153,0,0.25);
+  }
+  .n-orange .node-icon { background: rgba(255,153,0,0.15); }
+  .n-orange .node-service { color: #FF9900; }
+  .n-orange .node-name { color: #ffd480; }
+  .n-orange .node-desc { color: #cc9933; }
+
+  .n-blue {
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.22);
+  }
+  .n-blue .node-icon { background: rgba(59,130,246,0.15); }
+  .n-blue .node-service { color: #60a5fa; }
+  .n-blue .node-name { color: #93c5fd; }
+  .n-blue .node-desc { color: #3b82f6; }
+
+  .n-green {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.22);
+  }
+  .n-green .node-icon { background: rgba(16,185,129,0.15); }
+  .n-green .node-service { color: #34d399; }
+  .n-green .node-name { color: #6ee7b7; }
+  .n-green .node-desc { color: #10b981; }
+
+  .n-purple {
+    background: rgba(139,92,246,0.08);
+    border: 1px solid rgba(139,92,246,0.22);
+  }
+  .n-purple .node-icon { background: rgba(139,92,246,0.15); }
+  .n-purple .node-service { color: #a78bfa; }
+  .n-purple .node-name { color: #c4b5fd; }
+  .n-purple .node-desc { color: #8b5cf6; }
+
+  .n-teal {
+    background: rgba(20,184,166,0.08);
+    border: 1px solid rgba(20,184,166,0.22);
+  }
+  .n-teal .node-icon { background: rgba(20,184,166,0.15); }
+  .n-teal .node-service { color: #2dd4bf; }
+  .n-teal .node-name { color: #5eead4; }
+  .n-teal .node-desc { color: #14b8a6; }
+
+  .n-red {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.22);
+  }
+  .n-red .node-icon { background: rgba(239,68,68,0.15); }
+  .n-red .node-service { color: #f87171; }
+  .n-red .node-name { color: #fca5a5; }
+  .n-red .node-desc { color: #ef4444; }
+
+  .n-gray {
+    background: rgba(100,116,139,0.08);
+    border: 1px solid rgba(100,116,139,0.2);
+  }
+  .n-gray .node-icon { background: rgba(100,116,139,0.15); }
+  .n-gray .node-service { color: #94a3b8; }
+  .n-gray .node-name { color: #cbd5e1; }
+  .n-gray .node-desc { color: #64748b; }
+
+  /* ── Layer label ───────────────────────────────────────────────────────── */
+  .layer-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #2a3550;
+    text-align: center;
+    padding: 6px 0 2px;
+  }
+
+  /* ── Bottom stats bar ──────────────────────────────────────────────────── */
+  .stats-bar {
+    display: flex;
+    gap: 0;
+    margin-top: 36px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .stat {
+    flex: 1;
+    padding: 16px 18px;
+    background: rgba(255,255,255,0.03);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+  }
+  .stat:last-child { border-right: none; }
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #FF9900;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #3a4a6a;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── SVG connectors ────────────────────────────────────────────────────── */
+  .svg-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  /* spacing helpers */
+  .mb-sm { margin-bottom: 8px; }
+  .mb-md { margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="header">
+    <div class="header-left">
+      <h1>MetroCity <span>AWS</span> Data Pipeline</h1>
+      <p>Smart City Traffic &amp; Accident Analytics · End-to-End Architecture</p>
+    </div>
+    <div class="badge">
+      <span class="pill pill-orange">10 AWS Services</span>
+      <span class="pill pill-blue">5,300 Records</span>
+      <span class="pill pill-green">Fully Automated</span>
+      <span class="pill pill-purple">ML + BI</span>
+      <span class="pill pill-teal">Least-Privilege IAM</span>
+    </div>
+  </div>
+
+  <div class="pipeline">
+
+    <!-- Row 1: Ingest -->
+    <div class="layer-label">① ingest</div>
+    <div class="layer-row cols-2 mb-md">
+      <div class="node n-orange">
+        <div class="node-icon">🪣</div>
+        <div class="node-body">
+          <div class="node-service">Amazon S3</div>
+          <div class="node-name">Raw Data Landing Zone</div>
+          <div class="node-desc">raw/road_traffic_sensor_data.csv (300 rows)<br>raw/traffic_accident_data.csv (5,000 rows)</div>
+        </div>
+        <span class="node-tag pill-orange pill">Source</span>
+      </div>
+      <div class="node n-orange">
+        <div class="node-icon">🪣</div>
+        <div class="node-body">
+          <div class="node-service">Amazon S3</div>
+          <div class="node-name">Parquet Data Lake</div>
+          <div class="node-desc">processed/sensor/ · processed/accident/<br>Columnar format · 3-5× smaller than CSV</div>
+        </div>
+        <span class="node-tag pill-orange pill">Output</span>
+      </div>
+    </div>
+
+    <!-- Connector row 1→2 -->
+    <div class="layer-row cols-2 mb-md" style="height:32px; align-items:center;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#4a5a7a;letter-spacing:0.5px;">S3 Object Created event</div>
+        <div style="width:2px;height:20px;background:linear-gradient(to bottom,rgba(255,153,0,0.6),rgba(255,153,0,0.2));position:relative;">
+          <span style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,153,0,0.7);">▼</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#4a5a7a;letter-spacing:0.5px;">PySpark writes Parquet</div>
+        <div style="width:2px;height:20px;background:linear-gradient(to bottom,rgba(255,153,0,0.6),rgba(255,153,0,0.2));position:relative;">
+          <span style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,153,0,0.7);">▼</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Trigger + ETL -->
+    <div class="layer-label">② orchestrate + etl</div>
+    <div class="layer-row cols-2 mb-md">
+      <div class="node n-blue">
+        <div class="node-icon">⚡</div>
+        <div class="node-body">
+          <div class="node-service">Amazon EventBridge + AWS Lambda</div>
+          <div class="node-name">Automated Pipeline Trigger</div>
+          <div class="node-desc">EventBridge detects S3 Object Created event<br>Lambda routes CSV filename → correct Glue job<br>Zero human intervention required</div>
+        </div>
+        <span class="node-tag pill-blue pill">Serverless</span>
+      </div>
+      <div class="node n-green">
+        <div class="node-icon">⚙️</div>
+        <div class="node-body">
+          <div class="node-service">AWS Glue (PySpark)</div>
+          <div class="node-name">ETL Feature Engineering</div>
+          <div class="node-desc">Congestion Index · Risk Score · Hazard Level<br>Temporal decomposition · Binary flags<br>metrocity-sensor-etl · metrocity-accident-etl</div>
+        </div>
+        <span class="node-tag pill-green pill">Managed Spark</span>
+      </div>
+    </div>
+
+    <!-- Connector row 2→3 -->
+    <div class="layer-row cols-2 mb-md" style="height:32px; align-items:center;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#4a5a7a;letter-spacing:0.5px;">start_job_run()</div>
+        <div style="width:2px;height:20px;background:linear-gradient(to bottom,rgba(59,130,246,0.6),rgba(59,130,246,0.2));position:relative;">
+          <span style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(59,130,246,0.7);">▼</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#4a5a7a;letter-spacing:0.5px;">Crawler registers schema</div>
+        <div style="width:2px;height:20px;background:linear-gradient(to bottom,rgba(16,185,129,0.6),rgba(16,185,129,0.2));position:relative;">
+          <span style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(16,185,129,0.7);">▼</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Storage layer -->
+    <div class="layer-label">③ storage + catalog</div>
+    <div class="layer-row cols-2 mb-md">
+      <div class="node n-teal">
+        <div class="node-icon">🗄️</div>
+        <div class="node-body">
+          <div class="node-service">Amazon RDS MySQL</div>
+          <div class="node-name">Star Schema Data Warehouse</div>
+          <div class="node-desc">7 tables · 8 pre-aggregated views<br>dim_location · dim_date · dim_vehicle · dim_weather<br>fact_traffic · fact_accident · ml_accident_risk</div>
+        </div>
+        <span class="node-tag pill-teal pill">smart_city_dw</span>
+      </div>
+      <div class="node n-green">
+        <div class="node-icon">📋</div>
+        <div class="node-body">
+          <div class="node-service">Glue Data Catalog + Amazon Athena</div>
+          <div class="node-name">Schema Registry + Ad-hoc SQL</div>
+          <div class="node-desc">Crawler auto-detects Parquet schema<br>Athena queries S3 directly · serverless<br>Charged per byte scanned · ~$0.01 total</div>
+        </div>
+        <span class="node-tag pill-green pill">Serverless SQL</span>
+      </div>
+    </div>
+
+    <!-- Connector row 3→4 -->
+    <div class="layer-row cols-2 mb-md" style="height:32px; align-items:center;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#4a5a7a;letter-spacing:0.5px;">4-table JOIN for ML training</div>
+        <div style="width:2px;height:20px;background:linear-gradient(to bottom,rgba(20,184,166,0.6),rgba(20,184,166,0.2));position:relative;">
+          <span style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(20,184,166,0.7);">▼</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#4a5a7a;letter-spacing:0.5px;">8 views → dashboard datasets</div>
+        <div style="width:2px;height:20px;background:linear-gradient(to bottom,rgba(20,184,166,0.6),rgba(20,184,166,0.2));position:relative;">
+          <span style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(20,184,166,0.7);">▼</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: ML + Dashboard -->
+    <div class="layer-label">④ analytics + serve</div>
+    <div class="layer-row cols-2 mb-md">
+      <div class="node n-purple">
+        <div class="node-icon">🤖</div>
+        <div class="node-body">
+          <div class="node-service">Amazon SageMaker</div>
+          <div class="node-name">ML Training + Experiment Tracking</div>
+          <div class="node-desc">Random Forest · Gradient Boosting · Logistic Regression<br>5-fold stratified CV · Best model: RF ROC-AUC 0.552<br>297 Critical Risk accidents flagged · model.pkl → S3</div>
+        </div>
+        <span class="node-tag pill-purple pill">ml.t2.medium</span>
+      </div>
+      <div class="node n-blue">
+        <div class="node-icon">📊</div>
+        <div class="node-body">
+          <div class="node-service">Power BI Desktop</div>
+          <div class="node-name">5-Page BI Dashboard</div>
+          <div class="node-desc">City Overview · Traffic &amp; Congestion · Accident Analysis<br>Time Trends · Predictive Risk<br>Connected live to RDS MySQL · 8 views · 6 DAX measures</div>
+        </div>
+        <span class="node-tag pill-blue pill">DAX</span>
+      </div>
+    </div>
+
+    <!-- Row 5: Security + Monitoring -->
+    <div class="layer-label">⑤ security + monitoring</div>
+    <div class="layer-row cols-3">
+      <div class="node n-gray">
+        <div class="node-icon">🔐</div>
+        <div class="node-body">
+          <div class="node-service">IAM + Secrets Manager</div>
+          <div class="node-name">Least-Privilege Access</div>
+          <div class="node-desc">Scoped S3 bucket policy on Glue<br>Credentials encrypted in Secrets Manager<br>No hard-coded passwords anywhere</div>
+        </div>
+      </div>
+      <div class="node n-red">
+        <div class="node-icon">🔔</div>
+        <div class="node-body">
+          <div class="node-service">CloudWatch + SNS</div>
+          <div class="node-name">Pipeline Health Monitoring</div>
+          <div class="node-desc">3 alarms: SensorETL · AccidentETL · Lambda<br>Email via SNS within 5 min of failure<br>Pipeline health dashboard</div>
+        </div>
+      </div>
+      <div class="node n-gray">
+        <div class="node-icon">💰</div>
+        <div class="node-body">
+          <div class="node-service">AWS Budgets</div>
+          <div class="node-name">Cost Control</div>
+          <div class="node-desc">$5/month alert threshold<br>Free Tier maintained throughout<br>Actual spend ≈ $0.00</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pipeline -->
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val">10</div>
+      <div class="stat-lbl">AWS Services</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">5K</div>
+      <div class="stat-lbl">Accidents Analysed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">49.8%</div>
+      <div class="stat-lbl">Fatal or Severe %</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">297</div>
+      <div class="stat-lbl">Critical Risk Flagged</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">7+8</div>
+      <div class="stat-lbl">Tables + Views</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">$0</div>
+      <div class="stat-lbl">Actual AWS Spend</div>
+    </div>
+  </div>
+
+</div><!-- /canvas -->
+</body>
+</html>

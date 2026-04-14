@@ -1,0 +1,5 @@
+risk_tier,count,percentage,probability_threshold
+Critical Risk,297,5.9%,above 0.70
+High Risk,2112,42.2%,0.50 to 0.70
+Moderate Risk,2336,46.7%,0.35 to 0.50
+Low Risk,255,5.1%,below 0.35

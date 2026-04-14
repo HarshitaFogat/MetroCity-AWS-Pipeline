@@ -1,0 +1,41 @@
+name: Validate SQL Files
+
+on:
+  push:
+    paths:
+      - 'warehouse/**/*.sql'
+  pull_request:
+    paths:
+      - 'warehouse/**/*.sql'
+
+jobs:
+  lint-sql:
+    runs-on: ubuntu-latest
+    name: Lint SQL with sqlfluff
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install sqlfluff
+        run: pip install sqlfluff
+
+      - name: Lint warehouse SQL files
+        run: |
+          sqlfluff lint warehouse/schema_ddl.sql \
+            --dialect mysql \
+            --rules L003,L010,L014,L031
+          sqlfluff lint warehouse/all_views.sql \
+            --dialect mysql \
+            --rules L003,L010,L014,L031
+
+      - name: Check SQL files exist
+        run: |
+          test -f warehouse/schema_ddl.sql  && echo "schema_ddl.sql exists"
+          test -f warehouse/all_views.sql   && echo "all_views.sql exists"
+          echo "All required SQL files present."

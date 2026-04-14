@@ -1,0 +1,14 @@
+rank,feature,importance,category
+1,hour,0.196,Temporal
+2,location_name,0.108,Spatial
+3,vehicle_type,0.106,Vehicle
+4,month,0.100,Temporal
+5,number_of_vehicles,0.090,Traffic
+6,weather_condition,0.089,Environmental
+7,traffic_density_num,0.071,Traffic
+8,road_condition,0.071,Environmental
+9,is_weekend,0.038,Temporal
+10,quarter,0.036,Temporal
+11,is_peak_hour,0.034,Temporal
+12,hazardous_road,0.030,Environmental
+13,adverse_weather,0.030,Environmental
