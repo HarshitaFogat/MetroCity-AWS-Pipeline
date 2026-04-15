@@ -39,7 +39,7 @@ The pipeline is **fully automated** — uploading a CSV to S3 triggers the entir
 ```
                     ┌─────────────────────────────────────────┐
                     │            Amazon S3                    │
-                    │  raw/ (CSV)  →  processed/ (Parquet)   │
+                    │  raw/ (CSV)  →  processed/ (Parquet)    │
                     │  ml-artifacts/ (model.pkl)              │
                     └───────┬─────────────────┬───────────────┘
                             │ Object Created   │ Glue writes Parquet
@@ -68,8 +68,8 @@ The pipeline is **fully automated** — uploading a CSV to S3 triggers the entir
                     └──────┬────────────────┘
                            │              │
                ┌───────────┴──┐    ┌──────┴──────────────┐
-               │  SageMaker   │    │    Power BI Desktop  │
-               │  ML training │    │    5-page dashboard  │
+               │  SageMaker   │    │    Power BI Desktop │
+               │  ML training │    │    5-page dashboard │
                └──────────────┘    └─────────────────────┘
 
 Monitoring: CloudWatch (3 alarms) + SNS (email) + AWS Budgets ($5/month)
