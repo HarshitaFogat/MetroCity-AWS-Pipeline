@@ -132,7 +132,7 @@ The raw data had **zero engineered metrics** — every KPI was created during ET
 | Avg Congestion Index | **0.490** (range: 0.098–0.881) |
 | High Congestion % | **32.0%** |
 | Adverse weather % | 58.5% |
-| ML best model ROC-AUC | **0.552** (Random Forest) |
+| ML best model ROC-AUC | **0.553** (Random Forest) |
 | Critical Risk flagged | **297 accidents (5.9%)** |
 
 ### 3 Counterintuitive Findings
@@ -154,7 +154,7 @@ Binary classification: predict Fatal or Severe outcome (`is_fatal_or_severe = 1`
 
 | Model | Accuracy | F1 | ROC-AUC |
 |---|---|---|---|
-| **Random Forest ✓** | 0.550 | 0.519 | **0.552** |
+| **Random Forest ✓** | 0.550 | 0.519 | **0.553** |
 | Gradient Boosting | 0.512 | 0.500 | 0.525 |
 | Logistic Regression | 0.518 | 0.497 | 0.536 |
 
@@ -179,7 +179,7 @@ Risk Tier output: **297 Critical Risk** · 2,112 High Risk · 2,336 Moderate · 
 | Page 5: Predictive Risk | SageMaker ML Training |
 |---|---|
 | ![ML Risk](docs/screenshots/36_powerbi_page5_ml.png) | ![SageMaker](docs/screenshots/20_sagemaker_notebook_output.png) |
-| 297 Critical Risk accidents flagged | Random Forest wins: AUC 0.552 |
+| 297 Critical Risk accidents flagged | Random Forest wins: AUC 0.553 |
 
 ---
 
@@ -225,35 +225,6 @@ metrocity-aws-pipeline/
 └── docs/
     └── screenshots/              ← AWS console screenshots (proof of live infrastructure)
 ```
----
 
-## Reproduce This Project
-
-```bash
-# 1. Upload data to S3
-aws s3 cp data/raw/road_traffic_sensor_data.csv s3://YOUR-BUCKET/raw/
-aws s3 cp data/raw/traffic_accident_data.csv    s3://YOUR-BUCKET/raw/
-
-# 2. Run Glue ETL
-aws glue start-job-run --job-name metrocity-sensor-etl \
-    --arguments '{"--BUCKET_NAME":"YOUR-BUCKET"}'
-aws glue start-job-run --job-name metrocity-accident-etl \
-    --arguments '{"--BUCKET_NAME":"YOUR-BUCKET"}'
-
-# 3. Build RDS warehouse
-mysql -h YOUR-ENDPOINT -u admin -p smart_city_dw < warehouse/schema_ddl.sql
-python warehouse/load_rds.py
-mysql -h YOUR-ENDPOINT -u admin -p smart_city_dw < warehouse/all_views.sql
-
-# 4. ML training — run ml/severity_model.py in SageMaker Notebook (conda_python3)
-
-# 5. Set up monitoring
-# bash monitoring/cloudwatch_alarms.bat
-monitoring\cloudwatch_alarms.bat
-
-# 6. Connect Power BI Desktop to RDS endpoint on port 3306
-```
-
----
 
 **Harshita Fogat** · Data Engineer
