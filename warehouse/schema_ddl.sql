@@ -5,7 +5,7 @@
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS smart_city_dw
-    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE smart_city_dw;
 
